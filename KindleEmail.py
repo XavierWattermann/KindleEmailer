@@ -5,14 +5,13 @@ import smtplib
 import os
 import sys
 
-
-kindle_email = "KINDLE EMAIL"  # the email that is associated with your Kindle device
-
-sender = 'YOUR GMAIL USERNAME'
+kindle_email = 'KINDLE EMAIL'  # the email that is associated with your Kindle device
+gmail = 'YOUR GMAIL USERNAME'
 gmail_password = 'YOUR GMAIL PASSWORD'
 
 
 def send_email(file_path):
+
     #  code used from http://robertwdempsey.com/python3-email-with-attachments-using-gmail/
     recipients = [kindle_email]
 
@@ -20,9 +19,12 @@ def send_email(file_path):
     outer = MIMEMultipart()
     outer['Subject'] = 'EMAIL SUBJECT'
     outer['To'] = kindle_email
-    outer['From'] = sender
+    outer['From'] = gmail
     outer.preamble = 'You will not see this in a MIME-aware mail reader.\n'
-    attachments = [file_path]
+    if type(file_path) is list:
+        attachments = file_path
+    else:
+        attachments = [file_path]
 
     for file in attachments:
         try:
@@ -44,32 +46,33 @@ def send_email(file_path):
             s.ehlo()
             s.starttls()
             s.ehlo()
-            s.login(sender, gmail_password)
-            s.sendmail(sender, recipients, composed)
+            s.login(gmail, gmail_password)
+            s.sendmail(gmail, recipients, composed)
             s.close()
         print("Email sent!")
     except:
         print("Unable to send the email. Error: ", sys.exc_info()[0])
         raise
 
+file_path = ""
 
-print('''From Amazon: The Kindle Personal Document Service can convert and deliver the following types of documents:
-Microsoft Word (.doc, .docx), Rich Text Format (.rtf)
-HTML (.htm, .html), Text (.txt) documents
-
-Archived documents (zip , x-zip) and compressed archived documents, Mobi book
-
-Images that are of type JPEGs (.jpg), GIFs (.gif), Bitmaps (.bmp), and PNG images (.png).
-Adobe PDF (.pdf) documents are delivered without conversion to Kindle DX, Second Generation and Latest Generation Kindles.
-
-Adobe PDF (.pdf) can be converted to Kindle format and delivered on an experimental basis.''')
-
-
-while True:
-    file_path = input("path to file(Windows: shift+right-click->copy as path): ")
-    file_path = file_path.replace('"', "")
-    if not os.path.isfile(file_path):
+if len(sys.argv) > 1:
+    if not os.path.isfile(sys.argv[1]):
         print("Your input doesn't appear to be a valid path, try again")
     else:
+        file_path = str(sys.argv[1])
+        file_path = file_path.replace('"', "")
         send_email(file_path)
-        break
+else:
+    files = []
+    while True:
+        file_path = input("path to file (enter 'stop' to halt program): ")
+        file_path = file_path.replace('"', "")
+        if str(file_path).lower() == 'stop':
+            break
+        elif not os.path.isfile(file_path):
+            print("Your input doesn't appear to be a valid path, try again")
+        else:
+            files.append(file_path)
+
+    send_email(files)
